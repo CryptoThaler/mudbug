@@ -1,13 +1,45 @@
-# Swift
-.build/
-*.xcodeproj
-*.xcworkspace
+# --- Xcode / Swift / Apple Platform ---
+# Build artifacts
+build/
 DerivedData/
+*.moved-aside
+*.xcuserstate
 
-# Node.js
-node_modules/
-npm-debug.log
-package-lock.json
+# User-specific Xcode settings (Crucial: prevents local IDE states from being pushed)
+xcuserdata/
+*.xcuserdatad
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
 
-# Xcode
-*.xcuserdatad/
+# Diagnostics
+*.view_hierarchy
+*.xccheckout
+*.xcscmblueprint
+
+# --- Swift Package Manager ---
+.build/
+.swiftpm/
+# Keep Package.resolved in the repo to ensure consistent builds
+# !Package.resolved 
+
+# --- OpenClaw Secrets ---
+# Protect your Gateway URL and Auth Token
+Core/Network/APIConstants.swift
+*Secret.swift
+secrets.json
+
+# --- macOS / OS Specific ---
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# --- Backup/Temp Files ---
+*.swp
+*.lock
+*~
+*.tmp
+*.bak
