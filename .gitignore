@@ -5,7 +5,7 @@ DerivedData/
 *.moved-aside
 *.xcuserstate
 
-# User-specific Xcode settings (Crucial: prevents local IDE states from being pushed)
+# User-specific Xcode settings
 xcuserdata/
 *.xcuserdatad
 *.xcworkspace/xcuserdata/
@@ -20,12 +20,10 @@ xcuserdata/
 # --- Swift Package Manager ---
 .build/
 .swiftpm/
-# Keep Package.resolved in the repo to ensure consistent builds
-# !Package.resolved 
 
 # --- OpenClaw Secrets ---
 # Protect your Gateway URL and Auth Token
-Core/Network/APIConstants.swift
+OpenClawWatch/Core/Network/APIConstants.swift
 *Secret.swift
 secrets.json
 

@@ -1,0 +1,44 @@
+// APIConstants.swift.sample
+// OpenClaw watchOS Client
+//
+// ⚠️ INSTRUCTIONS:
+// 1. Duplicate this file and rename it to "APIConstants.swift"
+// 2. Replace the placeholder values with your actual OpenClaw Gateway URL and token
+// 3. NEVER commit "APIConstants.swift" to version control — it is .gitignored
+//
+// Your OpenClaw Gateway must have the HTTP API enabled in openclaw.json:
+// {
+//   "gateway": {
+//     "http": {
+//       "endpoints": {
+//         "chatCompletions": { "enabled": true }
+//       }
+//     }
+//   }
+// }
+
+import Foundation
+
+struct APIConstants {
+    /// The base URL of your OpenClaw Gateway, including the port.
+    /// Default OpenClaw Gateway port is 18789.
+    /// Examples:
+    ///   - Local network:  "http://192.168.1.100:18789"
+    ///   - Tailscale VPN:  "http://my-server.tail12345.ts.net:18789"
+    ///   - Public domain:  "https://openclaw.yourdomain.com:18789"
+    static let baseUrl = "https://YOUR_GATEWAY_URL:18789"
+
+    /// Your OpenClaw bearer token for authentication.
+    /// You can find or generate this in the OpenClaw Gateway admin panel.
+    static let token = "YOUR_OPENCLAW_BEARER_TOKEN"
+
+    /// The model identifier to use in API requests.
+    /// "openclaw:main" is the default for the primary agent.
+    static let model = "openclaw:main"
+
+    /// Request timeout in seconds. Increase if your Gateway is on a slow connection.
+    static let requestTimeoutSeconds: TimeInterval = 30
+
+    /// Stream timeout — how long to wait for the next SSE chunk before timing out.
+    static let streamTimeoutSeconds: TimeInterval = 120
+}

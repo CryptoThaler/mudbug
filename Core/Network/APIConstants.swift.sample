@@ -1,4 +1,0 @@
-struct APIConstants {
-    static let baseUrl = "https://YOUR_GATEWAY_URL:18789"
-    static let token = "YOUR_OPENCLAW_BEARER_TOKEN"
-}
