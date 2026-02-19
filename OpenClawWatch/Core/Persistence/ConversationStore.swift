@@ -9,7 +9,7 @@
 
 import Foundation
 
-final class ConversationStore {
+final class ConversationStore: @unchecked Sendable {
     static let shared = ConversationStore()
 
     private let defaults = UserDefaults.standard

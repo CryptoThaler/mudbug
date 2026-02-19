@@ -48,25 +48,17 @@ struct ChatView: View {
             .navigationTitle("OpenClaw 🦞")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(role: .destructive) {
-                            showClearConfirmation = true
-                        } label: {
-                            Label("Clear Chat", systemImage: "trash")
-                        }
-
-                        Button {
-                            Task { await viewModel.checkGatewayConnection() }
-                        } label: {
-                            Label("Test Connection", systemImage: "antenna.radiowaves.left.and.right")
-                        }
-
-                        NavigationLink(destination: SettingsView()) {
-                            Label("Settings", systemImage: "gear")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                    NavigationLink(destination: SettingsView()) {
+                        Image(systemName: "gear")
                             .foregroundStyle(clawOrange)
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(role: .destructive) {
+                        showClearConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(.red.opacity(0.8))
                     }
                 }
             }

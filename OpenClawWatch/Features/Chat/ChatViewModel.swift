@@ -7,7 +7,7 @@
 import SwiftUI
 import Observation
 
-@Observable
+@MainActor @Observable
 final class ChatViewModel {
 
     // MARK: - Published State
@@ -33,7 +33,6 @@ final class ChatViewModel {
 
     /// Consumes a notification pushed from the paired iPhone via WCSession.
     /// Displays it as an assistant message in the chat and triggers haptics.
-    @MainActor
     func consumeNotification(_ message: WatchNotifyMessage, transport: String) {
         let deliveryKey = makeDeliveryKey(message)
         guard !deliveredKeys.contains(deliveryKey) else { return }
