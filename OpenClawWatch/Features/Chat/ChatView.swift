@@ -1,26 +1,34 @@
 // ChatView.swift
-// OpenClaw watchOS Client
+// MudBug watchOS Client
 //
 // The primary chat interface for watchOS 12 with Liquid Glass design.
-// Uses NavigationStack + ScrollViewReader for auto-scrolling.
-// Supports Digital Crown scrolling, Smart Input, and context menus.
-// Accepts viewModel from the app entry point (injected with WatchConnectivity).
+// Features a mini Claw Clock in the toolbar, compact input bar,
+// and quick-action prompt chips for maximum input options.
 
 import SwiftUI
 
 struct ChatView: View {
     @Bindable var viewModel: ChatViewModel
     @State private var inputText = ""
-    @State private var showSettings = false
     @State private var showClearConfirmation = false
 
-    // OpenClaw brand
+    // MudBug brand
     private let clawOrange = Color(red: 1.0, green: 0.45, blue: 0.1)
+
+    // Quick-action prompts
+    private let quickPrompts = [
+        ("📊", "Status"),
+        ("📋", "Summary"),
+        ("🔍", "Search"),
+        ("⚡", "Quick task"),
+        ("💡", "Ideas"),
+        ("📝", "Notes"),
+    ]
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // Subtle gradient background
+                // Dark gradient background
                 LinearGradient(
                     colors: [
                         Color.black,
@@ -33,24 +41,20 @@ struct ChatView: View {
                 .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Chat messages
                     chatList
-
-                    // Connection status bar
                     if !viewModel.isGatewayReachable {
                         connectionBanner
                     }
-
-                    // Liquid Glass input bar
-                    inputBar
+                    inputSection
                 }
             }
-            .navigationTitle("OpenClaw 🦞")
+            .navigationTitle("MudBug")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: SettingsView()) {
-                        Image(systemName: "gear")
-                            .foregroundStyle(clawOrange)
+                        MudBugClockView()
+                            .frame(width: 32, height: 32)
+                            .clipShape(Circle())
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -58,12 +62,13 @@ struct ChatView: View {
                         showClearConfirmation = true
                     } label: {
                         Image(systemName: "trash")
+                            .font(.system(size: 12))
                             .foregroundStyle(.red.opacity(0.8))
                     }
                 }
             }
             .confirmationDialog(
-                "Clear Conversation?",
+                "Clear?",
                 isPresented: $showClearConfirmation,
                 titleVisibility: .visible
             ) {
@@ -104,49 +109,106 @@ struct ChatView: View {
         }
     }
 
-    // MARK: - Liquid Glass Input Bar
+    // MARK: - Input Section (Compact + Quick Actions)
 
-    private var inputBar: some View {
-        HStack(spacing: 6) {
-            TextField("Ask OpenClaw…", text: $inputText)
+    private var inputSection: some View {
+        VStack(spacing: 4) {
+            // Quick action chips
+            if viewModel.messages.isEmpty || !viewModel.isThinking {
+                quickActionBar
+            }
+            // Compact input bar
+            compactInputBar
+        }
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial.opacity(0.5))
+                .overlay(
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.white.opacity(0.04), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                )
+        }
+    }
+
+    private var quickActionBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 5) {
+                ForEach(quickPrompts, id: \.1) { emoji, label in
+                    Button {
+                        sendQuickPrompt(label)
+                    } label: {
+                        HStack(spacing: 2) {
+                            Text(emoji)
+                                .font(.system(size: 9))
+                            Text(label)
+                                .font(.system(size: 9, weight: .medium, design: .rounded))
+                        }
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(
+                                            clawOrange.opacity(0.2),
+                                            lineWidth: 0.5
+                                        )
+                                )
+                        )
+                        .foregroundStyle(.white.opacity(0.85))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.top, 4)
+        }
+    }
+
+    private var compactInputBar: some View {
+        HStack(spacing: 4) {
+            TextField("Ask MudBug…", text: $inputText)
                 .textFieldStyle(.plain)
-                .font(.system(size: 14, design: .rounded))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
+                .font(.system(size: 12, design: .rounded))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
                 .background {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(.ultraThinMaterial)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [
-                                            .white.opacity(0.25),
-                                            .white.opacity(0.08),
-                                            clawOrange.opacity(0.12)
+                                            .white.opacity(0.2),
+                                            .white.opacity(0.06),
+                                            clawOrange.opacity(0.1)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
-                                    lineWidth: 0.6
+                                    lineWidth: 0.5
                                 )
                         )
                 }
                 .disabled(viewModel.isThinking)
-                .onSubmit {
-                    submitMessage()
-                }
+                .onSubmit { submitMessage() }
 
             if viewModel.isThinking {
                 ProgressView()
                     .tint(clawOrange)
-                    .scaleEffect(0.8)
+                    .scaleEffect(0.7)
             } else {
-                Button {
-                    submitMessage()
-                } label: {
+                Button { submitMessage() } label: {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 28))
+                        .font(.system(size: 24))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(
                             inputText.trimmingCharacters(in: .whitespaces).isEmpty
@@ -157,78 +219,50 @@ struct ChatView: View {
                             color: inputText.trimmingCharacters(in: .whitespaces).isEmpty
                                 ? .clear
                                 : clawOrange.opacity(0.4),
-                            radius: 6, x: 0, y: 0
+                            radius: 4, x: 0, y: 0
                         )
                 }
                 .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty)
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background {
-            // Glass backdrop for the entire input area
-            Rectangle()
-                .fill(.ultraThinMaterial.opacity(0.5))
-                .overlay(
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.white.opacity(0.05), .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                )
-        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
     }
 
-    // MARK: - Empty State
+    // MARK: - Empty State (Full Clock)
 
     private var emptyState: some View {
-        VStack(spacing: 10) {
-            Text("🦞")
-                .font(.system(size: 44))
-                .shadow(color: clawOrange.opacity(0.4), radius: 12, x: 0, y: 0)
-            Text("OpenClaw")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [clawOrange, clawOrange.opacity(0.7)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-            Text("Your AI agent on your wrist.\nType or dictate to get started.")
-                .font(.system(size: 11, design: .rounded))
+        VStack(spacing: 4) {
+            MudBugClockView()
+                .frame(height: 120)
+                .padding(.horizontal, 4)
+            Text("Tap a chip or type to start")
+                .font(.system(size: 9, design: .rounded))
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
         }
         .listRowBackground(Color.clear)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .padding(.vertical, 4)
     }
 
-    // MARK: - Connection Banner (Glass)
+    // MARK: - Connection Banner
 
     private var connectionBanner: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             Image(systemName: "wifi.slash")
-                .font(.system(size: 10))
+                .font(.system(size: 8))
             Text("Gateway Unreachable")
-                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .font(.system(size: 9, weight: .medium, design: .rounded))
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
         .frame(maxWidth: .infinity)
         .background {
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .overlay(
-                    Rectangle()
-                        .fill(Color.red.opacity(0.6))
-                )
+                .overlay(Rectangle().fill(Color.red.opacity(0.6)))
         }
     }
 
@@ -238,9 +272,12 @@ struct ChatView: View {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         inputText = ""
-        Task {
-            await viewModel.sendMessage(text)
-        }
+        Task { await viewModel.sendMessage(text) }
+    }
+
+    private func sendQuickPrompt(_ label: String) {
+        Task { await viewModel.sendMessage(label) }
+        HapticManager.messageSent()
     }
 }
 

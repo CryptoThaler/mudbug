@@ -23,6 +23,7 @@ targets:
     sources:
       - path: OpenClawWatch/App/OpenClawApp.swift
       - path: OpenClawWatch/Features/Chat
+      - path: OpenClawWatch/Features/Clock
       - path: OpenClawWatch/Core
       - path: OpenClawWatch/Preview Content
         buildPhase: sources
@@ -40,7 +41,7 @@ targets:
         ENABLE_PREVIEWS: YES
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: OpenClawWatch/Info.plist
-        MARKETING_VERSION: "1.2.0"
+        MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "20260219"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
@@ -73,7 +74,7 @@ targets:
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: OpenClawWatch/WidgetExtension/Info.plist
-        MARKETING_VERSION: "1.2.0"
+        MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "20260219"
 
 schemes:

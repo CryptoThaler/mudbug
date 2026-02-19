@@ -1,5 +1,5 @@
 // MessageBubble.swift
-// OpenClaw watchOS Client
+// MudBug watchOS Client
 //
 // Liquid Glass chat bubble component for watchOS 12.
 // Uses .glassBackgroundEffect() for translucent, depth-aware bubble surfaces
@@ -189,7 +189,7 @@ struct MessageBubble: View {
 
     private var roleName: String {
         switch message.role {
-        case .assistant: return "OpenClaw"
+        case .assistant: return "MudBug"
         case .system: return "System"
         case .tool: return "Tool"
         case .user: return "You"

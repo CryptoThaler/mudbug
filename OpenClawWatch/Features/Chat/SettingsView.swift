@@ -1,5 +1,5 @@
 // SettingsView.swift
-// OpenClaw watchOS Client
+// MudBug watchOS Client
 //
 // Minimal settings screen for Gateway configuration and diagnostics.
 
@@ -74,7 +74,7 @@ struct SettingsView: View {
             Section("About") {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("🦞 OpenClaw Watch")
+                        Text("🦞 MudBug Watch")
                             .font(.system(size: 13, weight: .bold, design: .rounded))
                         Spacer()
                         Text("v1.0.0")
