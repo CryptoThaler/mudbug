@@ -1,14 +1,15 @@
 // ChatView.swift
 // OpenClaw watchOS Client
 //
-// The primary chat interface for watchOS 12.
+// The primary chat interface for watchOS 12 with Liquid Glass design.
 // Uses NavigationStack + ScrollViewReader for auto-scrolling.
 // Supports Digital Crown scrolling, Smart Input, and context menus.
+// Accepts viewModel from the app entry point (injected with WatchConnectivity).
 
 import SwiftUI
 
 struct ChatView: View {
-    @State private var viewModel = ChatViewModel()
+    @Bindable var viewModel: ChatViewModel
     @State private var inputText = ""
     @State private var showSettings = false
     @State private var showClearConfirmation = false
@@ -18,17 +19,31 @@ struct ChatView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Chat messages
-                chatList
+            ZStack {
+                // Subtle gradient background
+                LinearGradient(
+                    colors: [
+                        Color.black,
+                        Color(red: 0.05, green: 0.03, blue: 0.08),
+                        Color(red: 0.03, green: 0.02, blue: 0.06)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                // Connection status bar
-                if !viewModel.isGatewayReachable {
-                    connectionBanner
+                VStack(spacing: 0) {
+                    // Chat messages
+                    chatList
+
+                    // Connection status bar
+                    if !viewModel.isGatewayReachable {
+                        connectionBanner
+                    }
+
+                    // Liquid Glass input bar
+                    inputBar
                 }
-
-                // Input field
-                inputBar
             }
             .navigationTitle("OpenClaw 🦞")
             .toolbar {
@@ -87,6 +102,7 @@ struct ChatView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             .onChange(of: viewModel.messages.count) {
                 withAnimation(.easeOut(duration: 0.3)) {
                     proxy.scrollTo(viewModel.messages.last?.id, anchor: .bottom)
@@ -96,17 +112,34 @@ struct ChatView: View {
         }
     }
 
-    // MARK: - Input Bar
+    // MARK: - Liquid Glass Input Bar
 
     private var inputBar: some View {
         HStack(spacing: 6) {
             TextField("Ask OpenClaw…", text: $inputText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 14, design: .rounded))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(Color.gray.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            .white.opacity(0.25),
+                                            .white.opacity(0.08),
+                                            clawOrange.opacity(0.12)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.6
+                                )
+                        )
+                }
                 .disabled(viewModel.isThinking)
                 .onSubmit {
                     submitMessage()
@@ -121,11 +154,18 @@ struct ChatView: View {
                     submitMessage()
                 } label: {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 26))
+                        .font(.system(size: 28))
+                        .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(
                             inputText.trimmingCharacters(in: .whitespaces).isEmpty
                                 ? Color.gray.opacity(0.4)
                                 : clawOrange
+                        )
+                        .shadow(
+                            color: inputText.trimmingCharacters(in: .whitespaces).isEmpty
+                                ? .clear
+                                : clawOrange.opacity(0.4),
+                            radius: 6, x: 0, y: 0
                         )
                 }
                 .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -134,17 +174,39 @@ struct ChatView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
+        .background {
+            // Glass backdrop for the entire input area
+            Rectangle()
+                .fill(.ultraThinMaterial.opacity(0.5))
+                .overlay(
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.white.opacity(0.05), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                )
+        }
     }
 
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Text("🦞")
-                .font(.system(size: 40))
+                .font(.system(size: 44))
+                .shadow(color: clawOrange.opacity(0.4), radius: 12, x: 0, y: 0)
             Text("OpenClaw")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(clawOrange)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [clawOrange, clawOrange.opacity(0.7)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
             Text("Your AI agent on your wrist.\nType or dictate to get started.")
                 .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(.secondary)
@@ -155,7 +217,7 @@ struct ChatView: View {
         .padding(.vertical, 20)
     }
 
-    // MARK: - Connection Banner
+    // MARK: - Connection Banner (Glass)
 
     private var connectionBanner: some View {
         HStack(spacing: 4) {
@@ -166,9 +228,16 @@ struct ChatView: View {
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 10)
-        .padding(.vertical, 4)
+        .padding(.vertical, 5)
         .frame(maxWidth: .infinity)
-        .background(Color.red.opacity(0.85))
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Rectangle()
+                        .fill(Color.red.opacity(0.6))
+                )
+        }
     }
 
     // MARK: - Actions
@@ -186,5 +255,5 @@ struct ChatView: View {
 // MARK: - Preview
 
 #Preview {
-    ChatView()
+    ChatView(viewModel: ChatViewModel())
 }

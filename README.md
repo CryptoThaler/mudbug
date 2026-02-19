@@ -6,15 +6,21 @@ A thin Gateway client for [OpenClaw](https://github.com/nicepkg/openclaw) on **w
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture — Hybrid Client
 
-mudbug uses **Path 1: Thin Gateway Client** — the Watch sends messages to your self-hosted OpenClaw Gateway via the OpenAI-compatible REST API (`/v1/chat/completions`). The Gateway handles all the heavy lifting: Telegram routing, ClawHub skills, and persistent memory.
+mudbug uses a **hybrid architecture**: standalone HTTP/SSE to the Gateway for active chat, plus **WatchConnectivity** (WCSession) as a background relay from the paired iPhone for push-style notifications.
 
 ```
 ┌─────────────┐       HTTPS/SSE        ┌──────────────────┐       TDLib        ┌──────────┐
 │  Apple Watch │  ──────────────────▶  │  OpenClaw Gateway │  ──────────────▶  │ Telegram │
 │  (mudbug)    │  ◀──────────────────  │  :18789           │  ◀──────────────  │ Servers  │
-└─────────────┘    text/event-stream   └──────────────────┘                    └──────────┘
+└──────┬──────┘    text/event-stream   └──────┬───────────┘                    └──────────┘
+       │                                      │
+       │  WCSession (background relay)        │ Operator Protocol
+       │  ◀────────────────────────────       │
+       │                               ┌──────┴───────┐
+       └───────────────────────────────│  iPhone App  │
+                                       └──────────────┘
 ```
 
 ### Why Gateway, not standalone TDLib?
@@ -35,13 +41,13 @@ mudbug uses **Path 1: Thin Gateway Client** — the Watch sends messages to your
 ```
 OpenClawWatch/
 ├── App/
-│   ├── OpenClawApp.swift               # Entry point
+│   ├── OpenClawApp.swift               # Entry point + WCSession init
 │   └── ComplicationBundle.swift        # Widget extension entry
 ├── Features/
 │   ├── Chat/
-│   │   ├── ChatView.swift              # Main chat UI
+│   │   ├── ChatView.swift              # Liquid Glass chat UI
 │   │   ├── ChatViewModel.swift         # Business logic & streaming
-│   │   ├── MessageBubble.swift         # Chat bubble component
+│   │   ├── MessageBubble.swift         # Glass bubble component
 │   │   └── SettingsView.swift          # Gateway config & diagnostics
 │   └── Complication/
 │       └── QuickActionComplication.swift # Watch face widget
@@ -50,6 +56,8 @@ OpenClawWatch/
 │   │   ├── OpenClawAPI.swift           # SSE streaming engine
 │   │   ├── APIConstants.swift.sample   # Config template (committed)
 │   │   └── APIConstants.swift          # Your secrets (gitignored)
+│   ├── Connectivity/
+│   │   └── WatchConnectivityReceiver.swift # iPhone → Watch relay
 │   ├── Models/
 │   │   └── OpenClawModels.swift        # Protocol models
 │   ├── Persistence/
@@ -111,11 +119,17 @@ OpenClawWatch/
 
 ## ⌚ Features
 
+### 🪟 Liquid Glass Interface
+All message bubbles and the input bar use `ultraThinMaterial` with gradient overlays, inner stroke borders for glass-edge light refraction, and soft shadows for depth. Dark gradient background for maximum contrast.
+
 ### 💬 Streaming Chat
 Real-time token-by-token display using `URLSession.bytes(for:)` and `AsyncThrowingStream`. See the AI "type" on your wrist.
 
-### 🧠 Thinking Indicator
-Animated progress view with OpenClaw's signature orange while the agent processes your request.
+### 🧠 Animated Thinking Dots
+Bouncing dot animation in OpenClaw's signature orange while the agent processes your request — replaces the standard ProgressView.
+
+### 📲 WatchConnectivity (iPhone Relay)
+Receives background push-style notifications from the paired iPhone via `WCSession`. Ported from the [official OpenClaw WatchExtension](https://github.com/openclaw/openclaw/tree/main/apps/ios/WatchExtension) with dedup and chat integration.
 
 ### 📳 Haptic Feedback
 - **Click** when you send a message
@@ -142,21 +156,22 @@ Automatic retry support, connection status banner, and Gateway health check from
 
 ---
 
-## 🛑 The "Push" Problem
+## 🛑 The "Push" Problem (Mitigated)
 
-OpenClaw Gateway doesn't natively send Apple Push Notifications. For long-running tasks:
+OpenClaw Gateway doesn't natively send Apple Push Notifications. mudbug mitigates this via:
 
-> **The Telegram Hack:** Let your agent send results to your Telegram DM. The Telegram app's system notification hits your Watch; tap it to open mudbug.
-
-A v2 could implement a lightweight push relay via CloudKit or a serverless function.
+1. **WatchConnectivity** — The iPhone OpenClaw app relays notifications to the Watch via `WCSession` even when mudbug is backgrounded
+2. **Telegram fallback** — Let your agent send results to your Telegram DM; the Telegram system notification hits your Watch
 
 ---
 
 ## 📋 Roadmap
 
-- [ ] **v1.0** — Core chat with streaming SSE *(this release)*
-- [ ] **v1.1** — HealthKit integration (workout context for the agent)
-- [ ] **v1.2** — Siri Shortcuts / App Intents integration
+- [x] **v1.0** — Core chat with streaming SSE
+- [x] **v1.1** — Liquid Glass interface
+- [x] **v1.2** — WatchConnectivity hybrid relay
+- [ ] **v1.3** — HealthKit integration (workout context for the agent)
+- [ ] **v1.4** — Siri Shortcuts / App Intents integration
 - [ ] **v2.0** — Push notification relay via CloudKit
 - [ ] **v2.1** — Multi-conversation support with SwiftData
 - [ ] **v2.2** — ClawHub skill browser on the wrist

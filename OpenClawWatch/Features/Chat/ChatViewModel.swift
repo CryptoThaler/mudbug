@@ -21,11 +21,40 @@ final class ChatViewModel {
 
     private let api = OpenClawAPI.shared
     private let store = ConversationStore.shared
+    private var deliveredKeys: Set<String> = []
 
     // MARK: - Initialization
 
     init() {
         messages = store.load()
+    }
+
+    // MARK: - WatchConnectivity Incoming Notifications
+
+    /// Consumes a notification pushed from the paired iPhone via WCSession.
+    /// Displays it as an assistant message in the chat and triggers haptics.
+    @MainActor
+    func consumeNotification(_ message: WatchNotifyMessage, transport: String) {
+        let deliveryKey = makeDeliveryKey(message)
+        guard !deliveredKeys.contains(deliveryKey) else { return }
+        deliveredKeys.insert(deliveryKey)
+
+        let title = message.title.isEmpty ? "OpenClaw" : message.title
+        let content = message.body.isEmpty
+            ? title
+            : (title == "OpenClaw" ? message.body : "**\(title)**\n\(message.body)")
+
+        let msg = OpenClawMessage(role: .assistant, content: content)
+        messages.append(msg)
+        store.save(messages: messages)
+        HapticManager.responseComplete()
+    }
+
+    private func makeDeliveryKey(_ message: WatchNotifyMessage) -> String {
+        if let id = message.id, !id.isEmpty {
+            return "id:\(id)"
+        }
+        return "content:\(message.title)|\(message.body)|\(message.sentAtMs ?? 0)"
     }
 
     // MARK: - Send Message (Streaming)
