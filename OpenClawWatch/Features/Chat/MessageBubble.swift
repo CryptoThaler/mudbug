@@ -1,44 +1,41 @@
 // MessageBubble.swift
 // MudBug watchOS Client
 //
-// Liquid Glass chat bubble component for watchOS 12.
-// Uses .glassBackgroundEffect() for translucent, depth-aware bubble surfaces
-// with OpenClaw's signature orange accent. Falls back to .ultraThinMaterial
-// where Liquid Glass is unavailable.
+// Lobster-esque chat bubbles: warm orange glow with black illuminated text.
+// Premium devices get enhanced Liquid Glass depth effects.
+// Tap any assistant bubble to hear it read aloud.
 
 import SwiftUI
 
 struct MessageBubble: View {
     let message: OpenClawMessage
 
-    // OpenClaw brand colors
-    private let clawOrange = Color(red: 1.0, green: 0.45, blue: 0.1)
-    private let userBlue = Color(red: 0.25, green: 0.55, blue: 1.0)
+    // Lobster palette 🦞
+    private let lobsterOrange = Color(red: 1.0, green: 0.45, blue: 0.1)
+    private let lobsterAmber = Color(red: 0.95, green: 0.55, blue: 0.12)
+    private let lobsterDeep = Color(red: 0.6, green: 0.2, blue: 0.05)
+    private let shellHighlight = Color(red: 1.0, green: 0.7, blue: 0.3)
+
+    private var isPremium: Bool { DeviceCapability.isPremiumDevice }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 6) {
-            if message.role == .user {
-                Spacer(minLength: 16)
-            }
+        HStack(alignment: .bottom, spacing: 4) {
+            if message.role == .user { Spacer(minLength: 12) }
 
-            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
-
-                // Role label (only for non-user messages)
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 2) {
+                // Role label
                 if message.role != .user {
-                    HStack(spacing: 4) {
-                        if message.role == .assistant {
-                            Text("🦞")
-                                .font(.system(size: 10))
-                        }
-                        Text(roleName)
-                            .font(.system(size: 9, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.secondary)
+                    HStack(spacing: 3) {
+                        Text("🦞").font(.system(size: 9))
+                        Text("MudBug")
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundStyle(lobsterOrange.opacity(0.7))
                     }
                 }
 
-                // Message content
+                // Content
                 if message.isThinking {
-                    thinkingIndicator
+                    thinkingDots
                 } else if message.content.hasPrefix("⚠️") {
                     errorBubble
                 } else {
@@ -47,210 +44,150 @@ struct MessageBubble: View {
 
                 // Timestamp
                 Text(message.timestamp, style: .time)
-                    .font(.system(size: 8, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 7, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.3))
             }
 
-            if message.role == .assistant || message.role == .system || message.role == .tool {
-                Spacer(minLength: 16)
-            }
+            if message.role != .user { Spacer(minLength: 12) }
         }
         .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
     }
 
-    // MARK: - Content Bubble (Liquid Glass)
+    // MARK: - Lobster Content Bubble
 
     private var contentBubble: some View {
         Text(message.content)
-            .font(.system(size: 14, weight: .regular, design: .rounded))
-            .foregroundStyle(message.role == .user ? .white : .primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .foregroundStyle(message.role == .user ? .white : .black)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
             .background {
                 if message.role == .user {
-                    // User bubble: vibrant blue gradient with glass overlay
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    // User: deep shell with glass overlay
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [lobsterDeep, lobsterDeep.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(.ultraThinMaterial.opacity(isPremium ? 0.4 : 0.2))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            lobsterOrange.opacity(0.6),
+                                            shellHighlight.opacity(0.2),
+                                            .clear
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.6
+                                )
+                        )
+                } else {
+                    // MudBug: warm orange glow with black text
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    userBlue,
-                                    userBlue.opacity(0.7)
+                                    lobsterAmber.opacity(0.85),
+                                    lobsterOrange.opacity(0.7),
+                                    lobsterDeep.opacity(0.5)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(.ultraThinMaterial.opacity(0.3))
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(.ultraThinMaterial.opacity(isPremium ? 0.35 : 0.15))
                         )
                         .overlay(
-                            // Subtle inner border for glass edge effect
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [
-                                            .white.opacity(0.5),
-                                            .white.opacity(0.1),
+                                            shellHighlight.opacity(0.5),
+                                            lobsterOrange.opacity(0.3),
                                             .clear
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
-                                    lineWidth: 0.75
-                                )
-                        )
-                } else {
-                    // Assistant bubble: translucent glass panel
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            .white.opacity(0.08),
-                                            .clear,
-                                            clawOrange.opacity(0.04)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            .white.opacity(0.3),
-                                            .white.opacity(0.08),
-                                            clawOrange.opacity(0.15)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.5
+                                    lineWidth: isPremium ? 0.8 : 0.4
                                 )
                         )
                 }
             }
-            .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+            .shadow(
+                color: message.role == .user
+                    ? lobsterDeep.opacity(0.3)
+                    : lobsterOrange.opacity(isPremium ? 0.25 : 0.1),
+                radius: isPremium ? 6 : 3, x: 0, y: 2
+            )
+            .onTapGesture {
+                if message.role == .assistant {
+                    VoiceEngine.shared.toggle(message.content)
+                    HapticManager.clawGrab()
+                }
+            }
     }
 
-    // MARK: - Thinking Indicator (Glass)
-
-    private var thinkingIndicator: some View {
-        HStack(spacing: 6) {
-            // Animated dots instead of ProgressView for a more refined look
-            ThinkingDots(color: clawOrange)
-                .frame(width: 32, height: 12)
-            Text("Thinking…")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(clawOrange)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(clawOrange.opacity(0.2), lineWidth: 0.5)
-                )
-        }
-        .shadow(color: clawOrange.opacity(0.1), radius: 6, x: 0, y: 2)
-    }
-
-    // MARK: - Error Bubble (Glass + Red Tint)
+    // MARK: - Error Bubble
 
     private var errorBubble: some View {
         Text(message.content)
-            .font(.system(size: 12, weight: .medium, design: .rounded))
-            .foregroundStyle(.red)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
+            .font(.system(size: 12, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.red.opacity(0.2))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.red.opacity(0.08))
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(.ultraThinMaterial.opacity(0.3))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.red.opacity(0.25), lineWidth: 0.5)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(Color.red.opacity(0.4), lineWidth: 0.5)
                     )
-            }
+            )
     }
 
-    // MARK: - Helpers
+    // MARK: - Thinking Dots
 
-    private var roleName: String {
-        switch message.role {
-        case .assistant: return "MudBug"
-        case .system: return "System"
-        case .tool: return "Tool"
-        case .user: return "You"
-        }
-    }
-}
-
-// MARK: - Thinking Dots Animation
-
-struct ThinkingDots: View {
-    let color: Color
-    @State private var phase: Int = 0
-
-    var body: some View {
+    private var thinkingDots: some View {
         HStack(spacing: 4) {
-            ForEach(0..<3) { index in
+            ForEach(0..<3, id: \.self) { i in
                 Circle()
-                    .fill(color)
-                    .frame(width: 6, height: 6)
-                    .scaleEffect(phase == index ? 1.3 : 0.7)
-                    .opacity(phase == index ? 1.0 : 0.4)
+                    .fill(lobsterOrange)
+                    .frame(width: 5, height: 5)
+                    .scaleEffect(1.0)
                     .animation(
-                        .easeInOut(duration: 0.4)
+                        .easeInOut(duration: 0.5)
                         .repeatForever(autoreverses: true)
-                        .delay(Double(index) * 0.15),
-                        value: phase
+                        .delay(Double(i) * 0.15),
+                        value: true
                     )
             }
         }
-        .onAppear {
-            // Cycle through dots
-            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-                phase = (phase + 1) % 3
-            }
-        }
-    }
-}
-
-// MARK: - Preview
-
-#Preview {
-    List {
-        MessageBubble(message: OpenClawMessage(
-            role: .user,
-            content: "What's the weather in Bozeman?"
-        ))
-
-        MessageBubble(message: OpenClawMessage(
-            role: .assistant,
-            content: "Currently 28°F in Bozeman, MT. Clear skies with a high of 35°F expected today. 🏔️"
-        ))
-
-        MessageBubble(message: OpenClawMessage(
-            role: .assistant,
-            content: "",
-            isThinking: true
-        ))
-
-        MessageBubble(message: OpenClawMessage(
-            role: .assistant,
-            content: "⚠️ Cannot reach OpenClaw Gateway."
-        ))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(lobsterAmber.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.ultraThinMaterial.opacity(0.2))
+                )
+        )
     }
 }

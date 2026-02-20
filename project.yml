@@ -32,6 +32,7 @@ targets:
       - sdk: WatchConnectivity.framework
       - sdk: WatchKit.framework
       - sdk: UserNotifications.framework
+      - sdk: AVFoundation.framework
 
     settings:
       base:

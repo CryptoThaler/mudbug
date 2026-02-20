@@ -1,36 +1,57 @@
 // HapticManager.swift
-// OpenClaw watchOS Client
+// MudBug watchOS Client
 //
-// Centralized haptic feedback for the Watch.
-// Uses WatchKit's WKInterfaceDevice for hardware-level haptics.
+// Premium haptic engine with custom claw-grab pattern.
+// Uses async Task.sleep for multi-hit haptic sequences (Swift 6 safe).
 
 import WatchKit
 
+@MainActor
 enum HapticManager {
 
-    /// Played when the assistant finishes streaming a response.
-    /// Gives the user a physical cue to look at their wrist.
-    static func responseComplete() {
-        WKInterfaceDevice.current().play(.success)
+    private static let device = WKInterfaceDevice.current()
+
+    // MARK: - Standard
+
+    static func messageSent()      { device.play(.click) }
+    static func responseComplete() { device.play(.success) }
+    static func error()            { device.play(.failure) }
+    static func connected()        { device.play(.notification) }
+    static func scrollSnap()       { device.play(.directionDown) }
+    static func voiceStart()       { device.play(.start) }
+    static func voiceStop()        { device.play(.stop) }
+
+    // MARK: - Claw Grab 🦞 (double-snap + thump)
+
+    static func clawGrab() {
+        Task { @MainActor in
+            device.play(.click)
+            try? await Task.sleep(for: .milliseconds(60))
+            device.play(.click)
+            try? await Task.sleep(for: .milliseconds(90))
+            device.play(.directionUp)
+        }
     }
 
-    /// Played when the user sends a message.
-    static func messageSent() {
-        WKInterfaceDevice.current().play(.click)
+    // MARK: - Claw Release (thump + click)
+
+    static func clawRelease() {
+        Task { @MainActor in
+            device.play(.directionDown)
+            try? await Task.sleep(for: .milliseconds(100))
+            device.play(.click)
+        }
     }
 
-    /// Played on network errors or auth failures.
-    static func error() {
-        WKInterfaceDevice.current().play(.failure)
-    }
+    // MARK: - Easter Egg Discovered
 
-    /// Played when the Gateway connection is established.
-    static func connected() {
-        WKInterfaceDevice.current().play(.notification)
-    }
-
-    /// Subtle directional haptic — used for scroll-to-bottom.
-    static func scrollSnap() {
-        WKInterfaceDevice.current().play(.directionDown)
+    static func easterEggUnlocked() {
+        Task { @MainActor in
+            device.play(.success)
+            try? await Task.sleep(for: .milliseconds(200))
+            device.play(.notification)
+            try? await Task.sleep(for: .milliseconds(300))
+            device.play(.success)
+        }
     }
 }
